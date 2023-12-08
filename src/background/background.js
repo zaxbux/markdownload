@@ -746,15 +746,27 @@ async function getArticleFromDom(domString) {
     header.outerHTML = header.outerHTML;  
   });
 
+  // This needs to happen before Readability parses the dom,
+  // otherwise incorrect or missing values result.
+  const url = new URL(dom.baseURI);
+  const pageTitle = dom.title;
+
+  // Fix relative links
+  dom.body.querySelectorAll('img')?.forEach(image => {
+    let src = new URL(image.getAttribute('src'), url.href)
+    // set the new src
+    image.setAttribute('src', src)
+    console.log(src)
+  })
+
   // simplify the dom into an article
   const article = new Readability(dom).parse();
 
   // get the base uri from the dom and attach it as important article info
-  article.baseURI = dom.baseURI;
+  article.baseURI = url.toString();
   // also grab the page title
-  article.pageTitle = dom.title;
+  article.pageTitle = pageTitle;
   // and some URL info
-  const url = new URL(dom.baseURI);
   article.hash = url.hash;
   article.host = url.host;
   article.origin = url.origin;
